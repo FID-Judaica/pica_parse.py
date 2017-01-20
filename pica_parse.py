@@ -198,15 +198,11 @@ def iter_pica_file(file):
         if line.startswith('SET:'):
             if line_buffer:
                 yield (ppn, line_buffer)
-
             ppn = line.split()[6]
             line_buffer = []
-
         elif line == '':
             continue
-
         line_buffer.append(line)
-
     yield (ppn, line_buffer)
 
 
@@ -217,14 +213,10 @@ def pica_parse(file, subfield_separator='ƒ'):
         if line.startswith('SET:'):
             if record:
                 yield record
-
             ppn = line.split()[6]
             record = PicaRecord(ppn, subfield_separator)
-
         elif line == '':
             continue
-
         else:
             record.append_raw(line)
-
     yield record
