@@ -21,22 +21,27 @@
 designed with pica+ in mind, but parts may work with other MARC-related
 formats, too. or not.
 
-A `PicaRecord` object is a wrapper on a dictionary which has a PPN key, and a
-key for each field in the record. The value for each field is a *list* of
-fields with this key. Generally, there should only be one item in this list,
-but some keys do appear multiple times in a record. Each object in that list is
-a dictionary of subfields.
+A `PicaRecord` object is a wrapper on a dictionary which has a PPN key,
+and a key for each field in the record. The value for each field is a
+*list* of fields with this key. Generally, there should only be one item
+in this list, but some keys do appear multiple times in a record. Each
+object in that list is a dictionary of subfields, where the values are
+likewise lists.
 
-Because Python is dog slow, there are a few different methods for getting at
-data with varying levels of processing.
+However, since most (but by no means all) of these lists contain only
+one item, there are special .get() methods which will return a single
+field, and throw and error if there are multiple.
 
-iter_pica_file() is a function which looks at a file will plain-text pica
-    records and yields them as a list of (stripped) lines one at a time. No
-    processing.
+Because Python is dog slow, there are a few different methods for
+getting at data with varying levels of processing large numbers of
+records.
 
+iter_pica_file() is a function which looks at a file will plain-text
+    pica records and yields them as a ppn and a list of (stripped)
+    lines, one at a time. No processing (aside from rstrip).
 
-pica_parse() wraps iter_pica_file() to return a PicaRecord object for each
-    record.
+pica_parse() wraps iter_pica_file() to return a PicaRecord object for
+    each record.
 """
 import collections
 from functools import wraps, partial, update_wrapper
