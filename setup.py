@@ -10,7 +10,7 @@ setup(
     url='https://github.com/FID-Judaica/pica-parse.py',
     description='Tools for parsing and iterating '
                 'on plain-text Pica+ record dumps.',
-    # long_description=open('README.rst').read(),
+    long_description=open('README.rst').read(),
     py_modules=['pica_parse'],
     # entry_points={'console_scripts': ['pica-parse=pica_parse:main']},
 )
