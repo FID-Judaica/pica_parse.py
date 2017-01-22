@@ -191,41 +191,45 @@ class PicaField:
 
 
 ### iterators ###
-def file2raw(file):
+def file_processor(container_factory):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapped(file):
+            line = next(file)
+            while not line.startswith('SET:'):
+                line = next(file)
+            ppn = line.split()[6]
+            container = container_factory()
+            for line in map(str.rstrip, file):
+                if line.startswith('SET:'):
+                    yield (ppn, container)
+                    ppn = line.split()[6]
+                    container = container_factory()
+                elif line == '':
+                    continue
+                else:
+                    func(container, line)
+            yield (ppn, container)
+        return wrapped
+    return decorator
+
+
+@file_processor(list)
+def file2raw(line_buffer, line):
     """yield one pica record at a time as a tuple of (ppn, lines), where lines
     are the rstripped lines of uparsed text of the body of the record.
     """
-    line_buffer = None
-    for line in map(str.rstrip, file):
-        if line.startswith('SET:'):
-            if line_buffer:
-                yield (ppn, line_buffer)
-            ppn = line.split()[6]
-            line_buffer = []
-        elif line == '':
-            continue
-        line_buffer.append(line)
-    yield (ppn, line_buffer)
+    line_buffer.append(line)
 
 
-def file2dicts(file):
+@file_processor(dict)
+def file2dicts(record, line):
     """yield one pica record at a time as a tuple of (ppn, raw_dict), where
     raw_dict is a dictionary of fields, where each value is a list, in the
     event of multiple fields. No subfields are parsed.
     """
-    record = None
-    for line in map(str.rstrip, file):
-        if line.startswith('SET:'):
-            if record:
-                yield (ppn, record)
-            ppn = line.split()[6]
-            record = {}
-        elif line == '':
-            continue
-        else:
-            id_, _, value = line.partition(' ')
-            record.setdefault(id_, []).append(value)
-    yield (ppn, record)
+    id_, _, value = line.partition(' ')
+    record.setdefault(id_, []).append(value)
 
 
 def file2records(file, sub_sep='ƒ'):
