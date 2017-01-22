@@ -1,5 +1,4 @@
 from setuptools import setup
-import fastentrypoints
 
 setup(
     name='pica-parse',
@@ -12,5 +11,5 @@ setup(
                 'on plain-text Pica+ record dumps.',
     long_description=open('README.rst').read(),
     py_modules=['pica_parse'],
-    # entry_points={'console_scripts': ['pica-parse=pica_parse:main']},
+    entry_points={'console_scripts': ['tsvpica=pica_parse:tsvpica']},
 )
