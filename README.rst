@@ -172,3 +172,31 @@ see something a bit more like this:
   PicaField('036E', 'ƒT01ƒULatnƒaMonografyot be-toldot ʿam Yiśraʾelƒl22')
   PicaField('036E', 'ƒT01ƒUHebrƒaמונוגרפיות בתולדות עם ישראלƒl22')
   ...
+
+``PicaRecord`` instances also support checking membership with the
+``in`` operator.
+
+You can add fields to a ``PicaRecord`` in several ways. You can use
+subscript syntax: ``r['101B'] = 'ƒ009-07-04ƒt11:35:38.000'``. This will
+append the field content to the id. It will never overwrite the
+content. Additionally, you can put an un-parsed line of pica into the
+instance with the ``.append_raw()``, or a list of lines with
+``.extend_raw()``.
+
+You can't delete or overwrite anything unless you access the ``.dict``
+attribute directly. (note that this attribute does not contain any
+``PicaField`` instances. Such objects are created in the ``__getitem__``
+method.
+
+``PicaField`` objects
+---------------------
+We've already seen plenty of ``PicaField`` instances. They have a
+similar structure to a ``PicaRecord``. Each key will return a list of
+subfields marked with that key. Usually, there's only one, but sometimes
+their ain't. Therefore, the ``.get()`` method tries to
+flatten this nonsense out where possible. ``PicaField`` doesn't have an
+``__iter__`` method implemented, so you can't just ``for i in
+some_field:``, but it has a ``.items()`` method that returns tuples of
+keys and values (like a dictionary), and this also flattens out the list
+inception. The return values from a ``PicaField`` are not a special
+type; just strings.

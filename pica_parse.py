@@ -138,11 +138,11 @@ class PicaRecord:
         This is to avoid always having to add a list index when you know there
         is only one field with the identifer you're looking for.
         """
-        value = self[key]
-        length = len(value)
-        if length == 0:
+        try:
+            value = self[key]
+        except KeyError:
             return default
-        elif length == 1:
+        if len(value) == 1:
             if sub_key:
                 return value[0].get(sub_key, default)
             return value[0]
@@ -164,22 +164,22 @@ class PicaField:
         return "PicaField(%r, %r)" % (self.id_, self.raw)
 
     @reify
-    def fields(self):
+    def dict(self):
         fields = {}
         for i in self.raw.split(self.sep)[1:]:
             fields.setdefault(i[0], []).append(i[1:])
         return fields
 
     def __getitem__(self, key):
-        return self.fields[key]
+        return self.dict[key]
 
     def items(self):
-        for key, fields in self.fields.items():
+        for key, fields in self.dict.items():
             for item in fields:
                 yield (key, item)
 
     def __contains__(self, key):
-        return key in self.fields
+        return key in self.dict
 
     def get(self, key, default=None):
         """get always returns one or zero subfields (None if zero). If a field
@@ -188,11 +188,11 @@ class PicaField:
         This is to avoid always having to add a list index when you know there
         is only one subfield with the identifer you're looking for.
         """
-        value = self[key]
-        length = len(value)
-        if length == 0:
-            return None
-        elif length == 1:
+        try:
+            value = self[key]
+        except KeyError:
+            return default
+        if len(value) == 1:
             return value[0]
         else:
             raise MultipleFields('key %r contains multiple values. use '
@@ -201,6 +201,21 @@ class PicaField:
 
 ### iterators ###
 def file_processor(container_factory):
+    """Decorator factory. The parameter should be a function to create a
+    container you will collect things in will iterating over the lines of a
+    pica record, like `list`, `dict`, `set` or what have you.
+
+    The wrapped function should take that container as parameter 1, and the
+    current line of pica as parameter 2. The returned function will take a
+    file-like object as input and each yielded item will be a tuple containting
+    the ppn and the container object after you've iterated over every line.
+    This is the internal implementation of file2lines:
+
+    >>> @file_processor(list)
+    ... def file2lines(line_buffer, line):
+    ...    line_buffer.append(line)
+
+    """
     def decorator(func):
         @functools.wraps(func)
         def wrapped(file):
