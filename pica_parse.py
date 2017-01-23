@@ -166,7 +166,7 @@ class PicaField:
     @reify
     def dict(self):
         fields = {}
-        for i in self.raw.split(self.sep)[1:]:
+        for i in self.raw.lstrip(self.sep).split(self.sep):
             fields.setdefault(i[0], []).append(i[1:])
         return fields
 

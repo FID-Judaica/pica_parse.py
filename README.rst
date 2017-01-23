@@ -178,10 +178,9 @@ see something a bit more like this:
 
 You can add fields to a ``PicaRecord`` in several ways. You can use
 subscript syntax: ``r['101B'] = 'ƒ009-07-04ƒt11:35:38.000'``. This will
-append the field content to the id. It will never overwrite the
-content. Additionally, you can put an un-parsed line of pica into the
-instance with the ``.append_raw()``, or a list of lines with
-``.extend_raw()``.
+append the field content to the id. It will never overwrite the content.
+Additionally, you can put an un-parsed line of pica into the instance
+with the ``.append_raw()``, or a list of lines with ``.extend_raw()``.
 
 You can't delete or overwrite anything unless you access the ``.dict``
 attribute directly. (note that this attribute does not contain any
@@ -193,10 +192,37 @@ method.
 We've already seen plenty of ``PicaField`` instances. They have a
 similar structure to a ``PicaRecord``. Each key will return a list of
 subfields marked with that key. Usually, there's only one, but sometimes
-their ain't. Therefore, the ``.get()`` method tries to
-flatten this nonsense out where possible. ``PicaField`` doesn't have an
-``__iter__`` method implemented, so you can't just ``for i in
-some_field:``, but it has a ``.items()`` method that returns tuples of
-keys and values (like a dictionary), and this also flattens out the list
-inception. The return values from a ``PicaField`` are not a special
-type; just strings.
+their ain't. Therefore, the ``.get()`` method tries to flatten this
+nonsense out where possible. ``PicaField`` doesn't have an ``__iter__``
+method implemented, so you can't just ``for i in some_field:``, but it
+has a ``.items()`` method that returns tuples of keys and values (like a
+dictionary), and this also flattens out the list inception. The return
+values from a ``PicaField`` are not a special type; just strings.
+
+If anyone wants some example code with this type, open an issue.
+
+``tsvpica`` cli utility
+-----------------------
+Non-programmers really like spreadsheets -- almost as much as
+programmers hate it when someone gives them a spreadsheet as input data.
+I guess it's a decent tool for handling large data sets if you can't
+program.
+
+``tsvpica`` takes a file with plaintext Pica+ records as input and turns
+them into a TSV file with column representing a different Pica+ field. I
+made a cataloguer very happy with this.
+
+usage: tsvpica [-h] [-f] [-d [FIELD_LIST [FIELD_LIST ...]]] [-j JOIN_MULTI]
+               file
+
+positional arguments:
+  file
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -f, --freq-sort       sort fields by frequency
+  -d [FIELD_LIST [FIELD_LIST ...]], --field-list [FIELD_LIST [FIELD_LIST ...]]
+                        list of fields to use
+  -j JOIN_MULTI, --join-multi JOIN_MULTI
+                        join duplicate fields together with given string
+
