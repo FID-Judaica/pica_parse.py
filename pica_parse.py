@@ -36,7 +36,7 @@ Because Python is dog slow, there are a few different methods for
 getting at data with varying levels of processing large numbers of
 records.
 
-file2raw() is a function which looks at a file will plain-text
+file2lines() is a function which looks at a file will plain-text
     pica records and yields them as a ppn and a list of (stripped)
     lines, one at a time. No processing (aside from rstrip).
 
@@ -48,7 +48,7 @@ file2records() wraps file2dicts() to yield a PicaRecord object for
     each record.
 
 
-both file2raw() a
+both file2lines() a
 """
 import functools
 
@@ -95,7 +95,7 @@ class PicaRecord:
     """
     def __init__(self, ppn, sub_sep, lines=None, raw_dict=None):
         self.ppn = ppn
-        self.raw = raw or {}
+        self.raw = raw_dict or {}
         self.sub_sep = sub_sep
         if lines is not None:
             self.extend_raw(lines)
@@ -122,6 +122,9 @@ class PicaRecord:
         for key, fields in self.raw.items():
             for value in fields:
                 yield PicaField(key, value, self.sub_sep)
+
+    def __contains__(self, key):
+        return key in self.raw
 
     def get(self, key, sub_key=None):
         """get always returns one or zero fields (None if zero). If a record
@@ -172,6 +175,9 @@ class PicaField:
             for item in fields:
                 yield (key, item)
 
+    def __contains__(self, key):
+        return key in self.fields
+
     def get(self, key):
         """get always returns one or zero subfields (None if zero). If a field
         has multiples of the requested subfield, throw a MultipleFields error.
@@ -215,7 +221,7 @@ def file_processor(container_factory):
 
 
 @file_processor(list)
-def file2raw(line_buffer, line):
+def file2lines(line_buffer, line):
     """yield one pica record at a time as a tuple of (ppn, lines), where lines
     are the rstripped lines of uparsed text of the body of the record.
     """
@@ -241,6 +247,7 @@ def file2records(file, sub_sep='ƒ'):
 def tsvpica():
     import sys
     import argparse
+    import collections
     fields = ['PPN', "002@", "003O", "004A", "009P", "010@", "011@", "021A",
               "021M", "022A", "022A/01", "025@", "027A", "027A/01", "027A/02",
               "027A/03", "028A", "028B/01", "028C", "028C/01", "028C/02",
@@ -268,8 +275,18 @@ def tsvpica():
     field_set = set(fields)
 
     if args.freq_sort:
+
+        @file_processor(set)
+        def get_ids(f_set, line):
+            id_ = line.partition(' ')[0]
+            if id_ in field_set:
+                f_set.add(id_)
+
         with open(args.file) as file:
-            fields = freqfields(file, field_set)
+            field_count = collections.Counter()
+            for _, id_set in get_ids(file):
+                field_count.update(id_set)
+        fields = [f for f, _ in field_count.most_common()]
 
     file = open(args.file)
     print('\t'.join(fields))
@@ -294,12 +311,3 @@ def tsvpica():
                     except IndexError:
                         field_list.append('')
                 print('\t'.join(field_list))
-
-
-def freqfields(file, field_set):
-    import collections
-    field_count = collections.Counter()
-    for ppn, record in file2dicts(file):
-        field_count.update(record.keys())
-    return ['PPN'] + [field for field, _ in field_count.most_common()
-                      if field in field_set]
