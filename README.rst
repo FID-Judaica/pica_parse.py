@@ -221,7 +221,7 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -f, --freq-sort       sort fields by frequency
-  -d [FIELD_LIST [FIELD_LIST ...]], --field-list [FIELD_LIST [FIELD_LIST ...]]
+  -d [FIELD FIELD ...], --field-list [FIELD FIELD ...]
                         list of fields to use
   -j JOIN_MULTI, --join-multi JOIN_MULTI
                         join duplicate fields together with given string
