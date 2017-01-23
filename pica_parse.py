@@ -95,38 +95,41 @@ class PicaRecord:
     """
     def __init__(self, ppn, sub_sep, lines=None, raw_dict=None):
         self.ppn = ppn
-        self.raw = raw_dict or {}
+        self.dict = raw_dict or {}
         self.sub_sep = sub_sep
         if lines is not None:
             self.extend_raw(lines)
 
+    def __repr__(self):
+        return 'PicaRecord(%r, %r, %r)' % (self.ppn, self.sub_sep, self.raw)
+
     def __setitem__(self, key, value):
-        """adds a field to the list of fields with the same name"""
+        """adds a field to the list of fields with the same id"""
         self.raw.setdefault(key, []).append(value)
 
 
     def append_raw(self, line):
         """append an unparsed line to the fields"""
-        name, _, value = line.partition(' ')
-        self[name] = value
+        id_, _, value = line.partition(' ')
+        self[id_] = value
 
     def extend_raw(self, lines):
         for line in lines:
-            name, _, value = line.partition(' ')
-            self[name] = value
+            id_, _, value = line.partition(' ')
+            self[id_] = value
 
     def __getitem__(self, key):
-        return [PicaField(key, f, self.sub_sep) for f in self.raw[key]]
+        return [PicaField(key, f, self.sub_sep) for f in self.dict[key]]
 
     def __iter__(self):
-        for key, fields in self.raw.items():
+        for key, fields in self.dict.items():
             for value in fields:
                 yield PicaField(key, value, self.sub_sep)
 
     def __contains__(self, key):
-        return key in self.raw
+        return key in self.dict
 
-    def get(self, key, sub_key=None):
+    def get(self, key, sub_key=None, default=None):
         """get always returns one or zero fields (None if zero). If a record
         has multiples of the requested field, throw a MultipleFields error. The
         optional sub_key argument will be passed to the .get() method of the
@@ -138,10 +141,10 @@ class PicaRecord:
         value = self[key]
         length = len(value)
         if length == 0:
-            return None
+            return default
         elif length == 1:
             if sub_key:
-                return value[0].get(sub_key)
+                return value[0].get(sub_key, default)
             return value[0]
         else:
             raise MultipleFields('key %r contains multiple values. use '
@@ -149,16 +152,16 @@ class PicaRecord:
 
 
 class PicaField:
-    def __init__(self, name, raw_field, sep):
+    def __init__(self, id_, raw_field, sep):
         self.sep = sep
         self.raw = raw_field
-        self.name = name
+        self.id = id_
 
     def __str__(self):
-        return self.raw
+        return self.id + ' ' + self.raw
 
     def __repr__(self):
-        return "PicaField(%r, %r)" % (self.name, self.raw)
+        return "PicaField(%r, %r)" % (self.id_, self.raw)
 
     @reify
     def fields(self):
@@ -178,7 +181,7 @@ class PicaField:
     def __contains__(self, key):
         return key in self.fields
 
-    def get(self, key):
+    def get(self, key, default=None):
         """get always returns one or zero subfields (None if zero). If a field
         has multiples of the requested subfield, throw a MultipleFields error.
 
@@ -240,7 +243,7 @@ def file2dicts(record, line):
 
 def file2records(file, sub_sep='ƒ'):
     """yield one pica record at a time as PicaRecords"""
-    return (PicaRecord(ppn, sub_sep, raw=raw) for ppn, raw in file2dicts(file))
+    return (PicaRecord(ppn,sub_sep,raw_dict=d) for ppn, d in file2dicts(file))
 
 
 ### tsvpica ###
