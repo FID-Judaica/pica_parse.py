@@ -11,6 +11,7 @@ installation
 .. code:: sh
 
   $ git clone https://github.com/fid_judaica/pica_parse.py.git
+  $ cd pica_parse.py
   $ pip install pica_parse.py
 
 pica file iterators
@@ -90,15 +91,18 @@ you could do something like this:
   '019106858'
 
 A ``PicaRecord`` provides an interface similar to a dictionary for pica
-records with a few convenience features. A Pica+ record can
-multiple versions of the same field containing different data, in a
-``PicaRecord`` is a list of fields. If you use the normal subscript
-syntax, you will a list of ``PicaField`` instances. Usually, this list
-will contain one item. Because of this, a ``PicaRecord`` has a special
+records with a few convenience features.
+
+A Pica+ record can contain multiple versions of the same field
+containing different data. Therefore, in a ``PicaRecord`` each key
+points to a list of fields. If you use the normal subscript syntax, you
+will get back this list of ``PicaField`` instances.  Usually, this list
+will contain one item.  Because of this, a ``PicaRecord`` has a special
 ``.get()`` method which will only ever return a single ``PicaField``
 instance or fall back to the default if there is no such field (default
 defaults to ``None``). If there are multiple matching fields, it will
-throw a ``MultipleFields`` error.
+throw a ``MultipleFields`` error. (note: a MultipleFields instance has
+the list object in an attribute called ``.values``)
 
 .. code:: python
 
@@ -107,9 +111,9 @@ throw a ``MultipleFields`` error.
   >>> r.get('021A')
   PicaField('021A', "ƒa@Šel-lô be-derek ham-melekƒhMiryām Har'ēl")
 
-Additionally the ``.get()`` method can take an additional argument that
-will be passed on to the ``get`` method of the ``PicaField``, in order
-to return the contents of a subfield.
+Additionally the ``.get()`` method can take another argument that will
+be passed on to the ``get`` method of the ``PicaField``, in order to
+return the contents of a subfield.
 
 .. code:: python
 
@@ -151,10 +155,9 @@ even if there are repeat field ids.
   PicaField('209G/01', 'ƒa84792993ƒx00')
   PicaField('247C/01', 'ƒ9102598258ƒ8601000-3 <30>Frankfurt, Universitätsbibliothek J. C. Senckenberg, Zentralbibliothek (ZB)')
 
-OK, bad example, since there aren't any repeat ids in this record, but
-if there were, you'd get a separate item for each one. If this were one
-of the newer records with Hebrew and Romanized metadata entries, you'd
-see something a bit more like this:
+OK, bad example, since there aren't any repeat ids in this record. If
+this were one of the newer records with Hebrew and Romanized metadata
+entries, you'd see something a bit more like this:
 
 .. code:: python
 
@@ -185,14 +188,15 @@ with the ``.append_raw()``, or a list of lines with ``.extend_raw()``.
 You can't delete or overwrite anything unless you access the ``.dict``
 attribute directly. (note that this attribute does not contain any
 ``PicaField`` instances. Such objects are created in the ``__getitem__``
-method.
+method. The ``.dict`` attribute is the same kind of dictionary as output
+by ``file2dicts()``.)
 
 ``PicaField`` objects
 ---------------------
 We've already seen plenty of ``PicaField`` instances. They have a
 similar structure to a ``PicaRecord``. Each key will return a list of
-subfields marked with that key. Usually, there's only one, but sometimes
-their ain't. Therefore, the ``.get()`` method tries to flatten this
+subfields. Usually, there's only one, but sometimes
+there ain't. Therefore, the ``.get()`` method tries to flatten this
 nonsense out where possible. ``PicaField`` doesn't have an ``__iter__``
 method implemented, so you can't just ``for i in some_field:``, but it
 has a ``.items()`` method that returns tuples of keys and values (like a
@@ -214,20 +218,20 @@ made a cataloguer very happy with this.
 
 ``-d``, ``--field-list FEILD FIELD ...``
     a list of whitespace-separated fields You want to include in the
-    dump. There literally hundreds of possible field types, and it is
-    cumbrous to deal with them all. The default is a list of 60 fields
-    my coworker wanted for something she was working on. You probably
-    want something different.
+    dump. There are literally hundreds of possible field types, and it
+    is cumbrous to deal with them all. The default is a list of 60
+    fields my coworker wanted for something she was working on. You
+    probably want something different.
 
 ``-f``, ``--freq-sort``
     sort columns by the frequency with which they appears in the data
     so you don't have a bunch of empty spaces at the front. Doing this
-    requires an extra pass over the file, so it definitly increases
+    requires an extra pass over the file, so it definitely increases
     runtime.
 ``-j``, ``--join-multi JOIN_STRING``
     when multiple fields have the same ID, join them together with the
     provided string in one cell. The default behavior is to add new rows
-    for with lots of empty cells to accomodate duplicate field IDs. This
+    for with lots of empty cells to accommodate duplicate field IDs. This
     looks prettier, but it is probably less useful for data
     transformations.
 
@@ -244,5 +248,3 @@ made a cataloguer very happy with this.
 In LibreOffice Calc:
 
 .. image:: ./tsvpica.png
-
-
