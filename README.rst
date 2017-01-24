@@ -212,17 +212,37 @@ program.
 them into a TSV file with column representing a different Pica+ field. I
 made a cataloguer very happy with this.
 
-usage: tsvpica [-h] [-f] [-d [FIELD_LIST [FIELD_LIST ...]]] [-j JOIN_MULTI]
-               file
+``-d``, ``--field-list FEILD FIELD ...``
+    a list of whitespace-separated fields You want to include in the
+    dump. There literally hundreds of possible field types, and it is
+    cumbrous to deal with them all. The default is a list of 60 fields
+    my coworker wanted for something she was working on. You probably
+    want something different.
 
-positional arguments:
-  file
+``-f``, ``--freq-sort``
+    sort columns by the frequency with which they appears in the data
+    so you don't have a bunch of empty spaces at the front. Doing this
+    requires an extra pass over the file, so it definitly increases
+    runtime.
+``-j``, ``--join-multi JOIN_STRING``
+    when multiple fields have the same ID, join them together with the
+    provided string in one cell. The default behavior is to add new rows
+    for with lots of empty cells to accomodate duplicate field IDs. This
+    looks prettier, but it is probably less useful for data
+    transformations.
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -f, --freq-sort       sort fields by frequency
-  -d FIELD FIELD ..., --field-list FIELD FIELD ...
-                        list of fields to use
-  -j JOIN_MULTI, --join-multi JOIN_MULTI
-                        join duplicate fields together with given string
+.. code::
+
+  $ tsvpica titles\ in\ hebrew\ language\ 06.10.16.txt -d PPN 021A 027A 028A
+  PPN	021A	027A	028A
+  019106858	ƒa@Šel-lô be-derek ham-melekƒhMiryām Har'ēl		ƒ9162624026ƒ8Harel, Miriam
+  019106289	ƒa@Reṣaḥ be-môʿādôn penûyîm/ôtƒdrômān ballāšîƒhÔrā Šēm-Ûr		ƒ9162936621ƒ8Shem-Ur, Ora
+  019106181	ƒa@Reṣaḥ be-ṭiyyûl me'ûrgānƒhBārāq Tāšôr		ƒ9162936583ƒ8Tashor, Bark B.
+  019102232	ƒa@Megillat hag-gedûdƒdsîppûr hag-gedûdîm hā-ʿivriyyîm be-milḥemet hā-ʿôlām hā-rîšônāƒhZe'ēv Žabôṭînsqî		ƒ9086897276ƒ8Z'aboṭinsḳi, Zeev, 1880-1940
+  ...
+
+In LibreOffice Calc:
+
+.. image:: ./tsvpica.png
+
 

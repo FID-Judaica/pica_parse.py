@@ -304,7 +304,7 @@ def tsvpica():
             field_count = collections.Counter()
             for _, id_set in get_ids(file):
                 field_count.update(id_set)
-        fields = [f for f, _ in field_count.most_common()]
+        fields = ['PPN'] + [f for f, _ in field_count.most_common()]
 
     file = open(args.file)
     print('\t'.join(fields))
@@ -321,11 +321,13 @@ def tsvpica():
     else:
         for ppn, record in file2dicts(file):
             record['PPN'] = [ppn]
+            record = {k: record.get(k, []) for k in fields}
+            # make enough lines for when there are multiples of a single ID
             for i in range(len(max(record.values(), key=len))):
                 field_list = []
                 for field in fields:
                     try:
-                        field_list.append(record.get(field, [])[i])
+                        field_list.append(record[field][i])
                     except IndexError:
                         field_list.append('')
                 print('\t'.join(field_list))
