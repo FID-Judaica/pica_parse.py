@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    name='pica-parse',
+    name='pica_parse',
     version='0.0',
     author='FID-Judaica, Goethe Universität',
     license='MLP 2.0/EUPL 1.1',
