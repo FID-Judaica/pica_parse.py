@@ -10,6 +10,6 @@ setup(
     description='Tools for parsing and iterating '
                 'on plain-text Pica+ record dumps.',
     long_description=open('README.rst').read(),
-    py_modules=['pica_parse'],
-    entry_points={'console_scripts': ['tsvpica=pica_parse:tsvpica']},
+    packages=['pica_parse'],
+    entry_points={'console_scripts': ['tsvpica=pica_parse.tsvpica:tsvpica']},
 )

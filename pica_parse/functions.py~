@@ -16,10 +16,12 @@
 #
 # If you do not alter this notice, a recipient may use your version of
 # this file under either the MPL or the EUPL.
-
 """Module providing utilities for parsing plaintext pica records. It was
 designed with pica+ in mind, but parts may work with other MARC-related
 formats, too. or not.
+
+more documentation can be found at:
+https://github.com/FID-Judaica/pica_parse.py
 
 A `PicaRecord` object is a wrapper on a dictionary which has a PPN key,
 and a key for each field in the record. The value for each field is a
@@ -53,7 +55,7 @@ both file2lines() a
 import functools
 
 
-### helpers ###
+# # helpers # #
 class reify:
     """ Use as a class method decorator.  It operates almost exactly like the
     Python ``@property`` decorator, but it puts the result of the method it
@@ -86,7 +88,7 @@ class MultipleFields(Exception):
         return self.msg
 
 
-### types ###
+# # types # #
 class PicaRecord:
     """the internal representation is a dictionary where each field is a list
     of PicaField types. Everything in Pica+ can apparently come in multiple.
@@ -106,7 +108,6 @@ class PicaRecord:
     def __setitem__(self, key, value):
         """adds a field to the list of fields with the same id"""
         self.raw.setdefault(key, []).append(value)
-
 
     def append_raw(self, line):
         """append an unparsed line to the fields"""
@@ -148,7 +149,7 @@ class PicaRecord:
             return value[0]
         else:
             raise MultipleFields('key %r contains multiple values. use '
-                                 'subscript notation.' % key, values)
+                                 'subscript notation.' % key, value)
 
 
 class PicaField:
@@ -196,10 +197,10 @@ class PicaField:
             return value[0]
         else:
             raise MultipleFields('key %r contains multiple values. use '
-                                 'subscript notation.' % key, values)
+                                 'subscript notation.' % key, value)
 
 
-### iterators ###
+# # iterators # #
 def file_processor(container_factory):
     """Decorator factory. The parameter should be a function to create a
     container you will collect things in will iterating over the lines of a
@@ -258,12 +259,12 @@ def file2dicts(record, line):
 
 def file2records(file, sub_sep='ƒ'):
     """yield one pica record at a time as PicaRecords"""
-    return (PicaRecord(ppn,sub_sep,raw_dict=d) for ppn, d in file2dicts(file))
+    return (PicaRecord(ppn, sub_sep, raw_dict=d)
+            for ppn, d in file2dicts(file))
 
 
-### tsvpica ###
+# # tsvpica # #
 def tsvpica():
-    import sys
     import argparse
     import collections
     fields = ['PPN', "002@", "003O", "004A", "009P", "010@", "011@", "021A",
@@ -280,10 +281,10 @@ def tsvpica():
     add = ap.add_argument
     add('file')
     add('-f', '--freq-sort', action='store_true',
-            help='sort fields by frequency')
+        help='sort fields by frequency')
     add('-d', '--field-list', nargs='*', help='list of fields to use')
     add('-j', '--join-multi',
-            help='join duplicate fields together with given string')
+        help='join duplicate fields together with given string')
 
     args = ap.parse_args()
 
