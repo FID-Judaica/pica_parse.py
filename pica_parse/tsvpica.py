@@ -1,6 +1,6 @@
 import argparse
 import collections
-from . import functions
+from . import core
 print(__file__)
 
 
@@ -33,7 +33,7 @@ def tsvpica():
 
     if args.freq_sort:
 
-        @functions.file_processor(set)
+        @core.file_processor(set)
         def get_ids(f_set, line):
             id_ = line.partition(' ')[0]
             if id_ in field_set:
@@ -49,7 +49,7 @@ def tsvpica():
     print('\t'.join(fields))
 
     if args.join_multi:
-        for ppn, record in functions.file2dicts(file):
+        for ppn, record in core.file2dicts(file):
             record['PPN'] = [ppn]
             field_list = []
             for field in fields:
@@ -58,7 +58,7 @@ def tsvpica():
             print('\t'.join(field_list))
 
     else:
-        for ppn, record in functions.file2dicts(file):
+        for ppn, record in core.file2dicts(file):
             record['PPN'] = [ppn]
             record = {k: record.get(k, []) for k in fields}
             # make enough lines for when there are multiples of a single ID
