@@ -63,7 +63,8 @@ class reify:
     replacing the function it decorates with an instance variable.  It is, in
     Python parlance, a non-data descriptor.
 
-    Stolen from pyramid. http://docs.pylonsproject.org/projects/pyramid/en/latest/api/decorator.html#pyramid.decorator.reify
+    Stolen from pyramid.
+    http://docs.pylonsproject.org/projects/pyramid/en/latest/api/decorator.html#pyramid.decorator.reify
     """
     def __init__(self, wrapped):
         self.wrapped = wrapped
@@ -103,11 +104,11 @@ class PicaRecord:
             self.extend_raw(lines)
 
     def __repr__(self):
-        return 'PicaRecord(%r, %r, %r)' % (self.ppn, self.sub_sep, self.raw)
+        return 'PicaRecord(%r, %r, %r)' % (self.ppn, self.sub_sep, self.dict)
 
     def __setitem__(self, key, value):
         """adds a field to the list of fields with the same id"""
-        self.raw.setdefault(key, []).append(value)
+        self.dict.setdefault(key, []).append(value)
 
     def append_raw(self, line):
         """append an unparsed line to the fields"""
