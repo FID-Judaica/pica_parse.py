@@ -163,7 +163,7 @@ class PicaField:
         return self.id + ' ' + self.raw
 
     def __repr__(self):
-        return "PicaField(%r, %r)" % (self.id_, self.raw)
+        return "PicaField(%r, %r)" % (self.id, self.raw)
 
     @reify
     def dict(self):
