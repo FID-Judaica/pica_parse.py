@@ -52,15 +52,26 @@ class PicaDB:
         return self.con.__exit__(type, value, traceback)
 
     def __getitem__(self, ppn):
-        self.cur.execute(
-            "SELECT field, content from records where ppn = ?", (ppn,))
-        raw_dict = {}
-        fields = self.cur.fetchall()
-        if not fields:
-            raise KeyError(ppn)
-        for f, c in fields:
-            raw_dict.setdefault(f, []).append(c)
-        return core.PicaRecord(ppn, self.sep, raw_dict=raw_dict)
+        if isinstance(ppn, str):
+            self.cur.execute(
+                "SELECT field, content FROM records WHERE ppn = ?", (ppn,))
+            fields = self.cur.fetchall()
+            if not fields:
+                raise KeyError(ppn)
+            raw_dict = {}
+            for f, c in fields:
+                raw_dict.setdefault(f, []).append(c)
+            return core.PicaRecord(ppn, self.sep, raw_dict=raw_dict)
+        else:
+            ppn, field = ppn
+            self.cur.execute(
+                "SELECT content FROM records WHERE ppn = ? AND field = ?",
+                (ppn, field))
+            matches = self.cur.fetchall()
+            if not matches:
+                raise KeyError(repr((ppn, field)))
+            return [core.PicaField(field, content[0], 'ƒ')
+                    for content in matches]
 
 
 if __name__ == '__main__':
