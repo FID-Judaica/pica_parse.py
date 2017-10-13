@@ -18,11 +18,15 @@
 # this file under either the MPL or the EUPL.
 from . import core
 
-schema = '''
-CREATE TABLE records
-(id integer primary key, ppn varchar, field varchar, content varchar);
-CREATE INDEX ppns on records (ppn);
-CREATE INDEX fields on records (field);
+SCHEMA = '''
+CREATE TABLE IF NOT EXISTS records (
+    id integer primary key,
+    ppn varchar,
+    field varchar,
+    content varchar);
+CREATE INDEX IF NOT EXISTS ppns on records (ppn);
+CREATE INDEX IF NOT EXISTS fields on records (field);
+CREATE INDEX IF NOT EXISTS ppnfield on records (ppn, field);
 '''
 
 
@@ -44,6 +48,10 @@ class PicaDB:
         """
         self.con = connection
         self.cur = connection.cursor()
+
+    def create(self):
+        with self:
+            self.cur.executescript(SCHEMA)
 
     def __enter__(self):
         return self
@@ -72,6 +80,30 @@ class PicaDB:
                 raise KeyError(repr((ppn, field)))
             return [core.PicaField(field, content[0], 'ƒ')
                     for content in matches]
+
+    def get_field(self, field, like=False):
+        op = 'like' if like else '='
+        self.cur.execute(
+            'SELECT ppn, field, content FROM records WHERE field %s ?' % op,
+            (field,))
+        return ((ppn, core.PicaField(f, c, 'ƒ'))
+                for ppn, f, c in self.cur.fetchall())
+
+    def build_from_file(self, file):
+        self.create()
+        with self:
+            for i, rec in enumerate(core.file2dicts(file)):
+                self.add_record(*rec)
+                if i % 10000 == 0:
+                    self.con.commit()
+
+    def add_record(self, ppn, raw_dict):
+        for field, content in raw_dict.items():
+            for c in content:
+                self.cur.execute(
+                    'INSERT INTO records (ppn, field, content) '
+                    'VALUES(?, ?, ?)',
+                    (ppn, field, c))
 
 
 if __name__ == '__main__':

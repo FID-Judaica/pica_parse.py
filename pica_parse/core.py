@@ -236,7 +236,9 @@ def file_processor(container_factory):
                 else:
                     func(container, line)
             yield (ppn, container)
+
         return wrapped
+
     return decorator
 
 
