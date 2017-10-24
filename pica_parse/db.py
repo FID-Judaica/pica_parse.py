@@ -89,13 +89,19 @@ class PicaDB:
         return ((ppn, core.PicaField(f, c, 'ƒ'))
                 for ppn, f, c in self.cur.fetchall())
 
-    def build_from_file(self, file):
+    def build_from_file(self, file, commit_every=10000):
+        for i in self.bff_iter(file, commit_every):
+            pass
+
+    def bff_iter(self, file, commit_every=10000):
         self.create()
         with self:
             for i, rec in enumerate(core.file2dicts(file)):
                 self.add_record(*rec)
-                if i % 10000 == 0:
+                if i % commit_every == 0:
                     self.con.commit()
+                    yield i
+            yield i
 
     def add_record(self, ppn, raw_dict):
         for field, content in raw_dict.items():
