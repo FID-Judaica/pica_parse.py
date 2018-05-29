@@ -260,6 +260,11 @@ def file2dicts(record, line):
     record.setdefault(id_, []).append(value)
 
 
+@file_processor(list)
+def file2tuplist(lines, line):
+    lines.append(line.split(' ', maxsplit=1))
+
+
 def file2records(file, sub_sep='ƒ'):
     """yield one pica record at a time as PicaRecords"""
     return (PicaRecord(ppn, sub_sep, raw_dict=d)
