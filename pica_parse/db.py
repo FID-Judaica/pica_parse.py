@@ -26,7 +26,6 @@ Base = declarative_base()
 
 class Field(Base):
     __tablename__ = 'records'
-
     id = sa.Column(sa.Integer, primary_key=True)
     ppn = sa.Column(sa.String, index=True)
     field = sa.Column(sa.String, index=True)
@@ -89,9 +88,12 @@ class PicaDB:
         return ((ppn, core.PicaField(f, c, SEP))
                 for ppn, f, c in query)
 
-    def build_from_file(self, file, commit_every=10000):
+    def build_from_file(self, file, commit_every=10000, commit_callback=None):
         for i in self.bff_iter(file, commit_every):
-            pass
+            if commit_callback:
+                commit_callback(i)
+            else:
+                pass
 
     def bff_iter(self, file, commit_every=10000):
         self.create()
