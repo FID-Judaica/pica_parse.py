@@ -53,31 +53,10 @@ file2records() wraps file2dicts() to yield a PicaRecord object for
 both file2lines() a
 """
 import functools
+import libaaron
 
 
 # # helpers # #
-class reify:
-    """ Use as a class method decorator.  It operates almost exactly like the
-    Python ``@property`` decorator, but it puts the result of the method it
-    decorates into the instance dict after the first call, effectively
-    replacing the function it decorates with an instance variable.  It is, in
-    Python parlance, a non-data descriptor.
-
-    Stolen from pyramid.
-    http://docs.pylonsproject.org/projects/pyramid/en/latest/api/decorator.html#pyramid.decorator.reify
-    """
-    def __init__(self, wrapped):
-        self.wrapped = wrapped
-        functools.update_wrapper(self, wrapped)
-
-    def __get__(self, inst, objtype=None):
-        if inst is None:
-            return self
-        val = self.wrapped(inst)
-        setattr(inst, self.wrapped.__name__, val)
-        return val
-
-
 class MultipleFields(Exception):
     # exception class for PicaRecord.get(), which should return 1 or zero
     # results.
@@ -165,7 +144,7 @@ class PicaField:
     def __repr__(self):
         return "PicaField(%r, %r)" % (self.id, self.raw)
 
-    @reify
+    @libaaron.reify
     def dict(self):
         fields = {}
         for i in self.raw.lstrip(self.sep).split(self.sep):
