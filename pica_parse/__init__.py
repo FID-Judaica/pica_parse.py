@@ -6,3 +6,5 @@ from .core import (
     file2dicts,
     file2records,
     MultipleFields)
+
+from .index import PicaIndex

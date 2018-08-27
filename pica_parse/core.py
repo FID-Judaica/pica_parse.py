@@ -110,7 +110,7 @@ class PicaRecord:
     def __contains__(self, key):
         return key in self.dict
 
-    def get(self, key, sub_key=None, default=None):
+    def get_one(self, key, sub_key=None, default=None):
         """get always returns one or zero fields (None if zero). If a record
         has multiples of the requested field, throw a MultipleFields error. The
         optional sub_key argument will be passed to the .get() method of the
@@ -125,11 +125,30 @@ class PicaRecord:
             return default
         if len(value) == 1:
             if sub_key:
-                return value[0].get(sub_key, default)
+                return value[0].get_one(sub_key, default)
             return value[0]
         else:
             raise MultipleFields('key %r contains multiple values. use '
                                  'subscript notation.' % key, value)
+
+    def get(self, key, sub_key=None, default=None):
+        """
+        """
+        try:
+            fields = self[key]
+        except KeyError:
+            return default
+
+        if not sub_key:
+            return fields
+
+        subfields = []
+        for field in fields:
+            subs = field.get(sub_key, default)
+            if subs:
+                subfields.extend(subs)
+
+        return subfields
 
 
 class PicaField:
@@ -162,7 +181,7 @@ class PicaField:
     def __contains__(self, key):
         return key in self.dict
 
-    def get(self, key, default=None):
+    def get_one(self, key, default=None):
         """get always returns one or zero subfields (None if zero). If a field
         has multiples of the requested subfield, throw a MultipleFields error.
 
@@ -178,6 +197,14 @@ class PicaField:
         else:
             raise MultipleFields('key %r contains multiple values. use '
                                  'subscript notation.' % key, value)
+
+    def get(self, key, default=None):
+        """ """
+        try:
+            value = self[key]
+        except KeyError:
+            return default
+        return value
 
 
 # # iterators # #
