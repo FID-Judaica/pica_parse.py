@@ -16,6 +16,7 @@
 #
 # If you do not alter this notice, a recipient may use your version of
 # this file under either the MPL or the EUPL.
+import itertools
 from . import core
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
@@ -88,24 +89,31 @@ class PicaDB:
         return ((ppn, core.PicaField(f, c, SEP))
                 for ppn, f, c in query)
 
+    def add_record(self, ppn, tuplist):
+        self.session.add_all(
+            Field(ppn=ppn, field=field, content=content)
+            for field, content in tuplist)
+
+    def bff_iter(self, file, commit_every=10000):
+        self.create()
+        records = enumerate(core.file2tuplist(file))
+        old_i = 0
+        while True:
+            transaction = []
+            for i, (ppn, rec) in itertools.islice(records, 0, commit_every):
+                for field, content in rec:
+                    transaction.append(
+                            dict(ppn=ppn, field=field, content=content))
+            self.session.bulk_insert_mappings(Field, transaction)
+            self.session.commit()
+            if i == old_i:
+                break
+            yield i + 1
+            old_i = i
+
     def build_from_file(self, file, commit_every=10000, commit_callback=None):
         for i in self.bff_iter(file, commit_every):
             if commit_callback:
                 commit_callback(i)
             else:
                 pass
-
-    def bff_iter(self, file, commit_every=10000):
-        self.create()
-        with self:
-            for i, (ppn, rec) in enumerate(core.file2tuplist(file)):
-                self.add_record(ppn, rec)
-                if i % commit_every == 0:
-                    self.session.commit()
-                    yield i
-            yield i
-
-    def add_record(self, ppn, tuplist):
-        self.session.add_all(
-            Field(ppn=ppn, field=field, content=content)
-            for field, content in tuplist)
