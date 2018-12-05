@@ -5,6 +5,8 @@ from .core import (
     file2lines,
     file2dicts,
     file2records,
-    MultipleFields)
+    MultipleFields,
+    expand_dict,
+    )
 
 from .index import PicaIndex

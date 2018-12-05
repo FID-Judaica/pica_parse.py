@@ -75,6 +75,8 @@ class PicaRecord:
     However, this abstraction gives possibilities to return flat(ter)
     abstractions as well and the risk of leaving out some fields.
     """
+    __slots__ = 'ppn', 'dict', 'sub_sep'
+
     def __init__(self, ppn, sub_sep, lines=None, raw_dict=None):
         self.ppn = ppn
         self.dict = raw_dict or {}
@@ -275,3 +277,14 @@ def file2records(file, sub_sep='ƒ'):
     """yield one pica record at a time as PicaRecords"""
     return (PicaRecord(ppn, sub_sep, raw_dict=d)
             for ppn, d in file2dicts(file))
+
+
+def expand_dict(ppn, raw_dict, sub_sep='ƒ'):
+    new = {"ppn": ppn}
+    for field, content in raw_dict.items():
+        subdict = {}
+        for subfields in content:
+            for subfield in subfields.split(sub_sep)[1:]:
+                subdict.setdefault(subfield[0], []).append(subfield[1:])
+        new.setdefault(field, []).append(subdict)
+    return new

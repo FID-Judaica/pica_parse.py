@@ -43,13 +43,13 @@ class PicaDB:
     It also has facilities for adding verified normalizations into the
     database.
     """
-    def __init__(self, sqlachemy_url):
+    def __init__(self, sqlalchemy_url):
         """database queries for pica records.
 
-        - sqlachemy_url: a sqlalchemy-format database url. see:
+        - sqlalchemy_url: a sqlalchemy-format database url. see:
         http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls
         """
-        self.engine = sa.create_engine(sqlachemy_url)
+        self.engine = sa.create_engine(sqlalchemy_url)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
 
