@@ -112,7 +112,7 @@ class PicaRecord:
     def __contains__(self, key):
         return key in self.dict
 
-    def get_one(self, key, sub_key=None, default=None):
+    def getone(self, key, sub_key=None, default=None):
         """get always returns one or zero fields (None if zero). If a record
         has multiples of the requested field, throw a MultipleFields error. The
         optional sub_key argument will be passed to the .get() method of the
@@ -134,8 +134,6 @@ class PicaRecord:
                                  'subscript notation.' % key, value)
 
     def get(self, key, sub_key=None, default=None):
-        """
-        """
         try:
             fields = self[key]
         except KeyError:
@@ -151,6 +149,18 @@ class PicaRecord:
                 subfields.extend(subs)
 
         return subfields
+
+    def to_dict(self):
+        dct = {}
+        for field in self:
+            dct.setdefault(field.id, []).append(field.dict)
+        return dct
+
+    def __getstate__(self):
+        return self.ppn, self.sub_sep, self.dict
+
+    def __setstate__(self, state):
+        self.ppn, self.sub_sep, self.dict = state
 
 
 class PicaField:
@@ -183,7 +193,7 @@ class PicaField:
     def __contains__(self, key):
         return key in self.dict
 
-    def get_one(self, key, default=None):
+    def getone(self, key, default=None):
         """get always returns one or zero subfields (None if zero). If a field
         has multiples of the requested subfield, throw a MultipleFields error.
 
@@ -277,14 +287,3 @@ def file2records(file, sub_sep='ƒ'):
     """yield one pica record at a time as PicaRecords"""
     return (PicaRecord(ppn, sub_sep, raw_dict=d)
             for ppn, d in file2dicts(file))
-
-
-def expand_dict(ppn, raw_dict, sub_sep='ƒ'):
-    new = {"ppn": ppn}
-    for field, content in raw_dict.items():
-        subdict = {}
-        for subfields in content:
-            for subfield in subfields.split(sub_sep)[1:]:
-                subdict.setdefault(subfield[0], []).append(subfield[1:])
-        new.setdefault(field, []).append(subdict)
-    return new
