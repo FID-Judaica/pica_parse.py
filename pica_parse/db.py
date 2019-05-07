@@ -85,7 +85,7 @@ class PicaDB:
             return [core.PicaField(field, f.content, SEP) for f in results]
 
     def get_field(self, field, like=False):
-        query = self.session.query(Field).filter(field=field)
+        query = self.session.query(Field.ppn, Field.id, Field.content).filter(Field.field == field)
         return ((ppn, core.PicaField(f, c, SEP))
                 for ppn, f, c in query)
 
