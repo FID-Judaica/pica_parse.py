@@ -7,9 +7,9 @@ from . import core
 
 
 def imake(pica_path, unicode=True):
-    with open(pica_path, 'rb') as pica:
+    with open(pica_path, "rb") as pica:
         for line in pica:
-            if line.startswith(b'SET:'):
+            if line.startswith(b"SET:"):
                 address = pica.tell()
                 ppn = line.split()[6]
                 if unicode:
@@ -18,11 +18,11 @@ def imake(pica_path, unicode=True):
 
 
 def make_tsv(pica_path, index_path):
-    with open(index_path, 'wb') as index:
-        index.write(path.abspath(pica_path).encode() + b'\n')
+    with open(index_path, "wb") as index:
+        index.write(path.abspath(pica_path).encode() + b"\n")
         for ppn, address in imake(pica_path, unicode=False):
-                for bt in (ppn, b'\t', address, b'\n'):
-                    index.write(bt)
+            for bt in (ppn, b"\t", address, b"\n"):
+                index.write(bt)
 
 
 def read(index_path):
@@ -36,7 +36,7 @@ def getlines(file, address):
     file.seek(address)
     lines = []
     for line in map(str.rstrip, file):
-        if line.startswith('SET:'):
+        if line.startswith("SET:"):
             break
         if line:
             lines.append(line)
@@ -44,7 +44,7 @@ def getlines(file, address):
 
 
 class PicaIndex:
-    __slots__ = 'index', 'file'
+    __slots__ = "index", "file"
 
     def __init__(self, index, path):
         self.index = index
@@ -63,7 +63,7 @@ class PicaIndex:
     def __getitem__(self, ppn):
         address = int(self.index[ppn])
         lines = getlines(self.file, address)
-        return core.PicaRecord(ppn, 'ƒ', lines)
+        return core.PicaRecord(ppn, "ƒ", lines)
 
     def close(self):
         self.file.close()

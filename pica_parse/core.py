@@ -75,7 +75,8 @@ class PicaRecord:
     However, this abstraction gives possibilities to return flat(ter)
     abstractions as well and the risk of leaving out some fields.
     """
-    __slots__ = 'ppn', 'dict', 'sub_sep'
+
+    __slots__ = "ppn", "dict", "sub_sep"
 
     def __init__(self, ppn, sub_sep, lines=None, raw_dict=None):
         self.ppn = ppn
@@ -85,7 +86,7 @@ class PicaRecord:
             self.extend_raw(lines)
 
     def __repr__(self):
-        return 'PicaRecord(%r, %r, %r)' % (self.ppn, self.sub_sep, self.dict)
+        return "PicaRecord(%r, %r, %r)" % (self.ppn, self.sub_sep, self.dict)
 
     def __setitem__(self, key, value):
         """adds a field to the list of fields with the same id"""
@@ -93,12 +94,12 @@ class PicaRecord:
 
     def append_raw(self, line):
         """append an unparsed line to the fields"""
-        id_, _, value = line.partition(' ')
+        id_, _, value = line.partition(" ")
         self[id_] = value
 
     def extend_raw(self, lines):
         for line in lines:
-            id_, _, value = line.partition(' ')
+            id_, _, value = line.partition(" ")
             self[id_] = value
 
     def __getitem__(self, key):
@@ -130,8 +131,11 @@ class PicaRecord:
                 return value[0].get_one(sub_key, default)
             return value[0]
         else:
-            raise MultipleFields('key %r contains multiple values. use '
-                                 'subscript notation.' % key, value)
+            raise MultipleFields(
+                "key %r contains multiple values. use "
+                "subscript notation." % key,
+                value,
+            )
 
     def get(self, key, sub_key=None, default=None):
         try:
@@ -170,7 +174,7 @@ class PicaField:
         self.id = id_
 
     def __str__(self):
-        return self.id + ' ' + self.raw
+        return self.id + " " + self.raw
 
     def __repr__(self):
         return "PicaField(%r, %r)" % (self.id, self.raw)
@@ -207,8 +211,11 @@ class PicaField:
         if len(value) == 1:
             return value[0]
         else:
-            raise MultipleFields('key %r contains multiple values. use '
-                                 'subscript notation.' % key, value)
+            raise MultipleFields(
+                "key %r contains multiple values. use "
+                "subscript notation." % key,
+                value,
+            )
 
     def get(self, key, default=None):
         """ """
@@ -236,20 +243,21 @@ def file_processor(container_factory):
     ...    line_buffer.append(line)
 
     """
+
     def decorator(func):
         @functools.wraps(func)
         def wrapped(file):
             line = next(file)
-            while not line.startswith('SET:'):
+            while not line.startswith("SET:"):
                 line = next(file)
             ppn = line.split()[6]
             container = container_factory()
             for line in map(str.rstrip, file):
-                if line.startswith('SET:'):
+                if line.startswith("SET:"):
                     yield (ppn, container)
                     ppn = line.split()[6]
                     container = container_factory()
-                elif line == '':
+                elif line == "":
                     continue
                 else:
                     func(container, line)
@@ -274,16 +282,17 @@ def file2dicts(record, line):
     raw_dict is a dictionary of fields, where each value is a list, in the
     event of multiple fields. No subfields are parsed.
     """
-    id_, _, value = line.partition(' ')
+    id_, _, value = line.partition(" ")
     record.setdefault(id_, []).append(value)
 
 
 @file_processor(list)
 def file2tuplist(lines, line):
-    lines.append(line.split(' ', maxsplit=1))
+    lines.append(line.split(" ", maxsplit=1))
 
 
-def file2records(file, sub_sep='ƒ'):
+def file2records(file, sub_sep="ƒ"):
     """yield one pica record at a time as PicaRecords"""
-    return (PicaRecord(ppn, sub_sep, raw_dict=d)
-            for ppn, d in file2dicts(file))
+    return (
+        PicaRecord(ppn, sub_sep, raw_dict=d) for ppn, d in file2dicts(file)
+    )

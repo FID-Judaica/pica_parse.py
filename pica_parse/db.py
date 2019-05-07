@@ -21,19 +21,20 @@ from . import core
 import sqlalchemy as sa
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-SEP = 'ƒ'
+
+SEP = "ƒ"
 Base = declarative_base()
 
 
 class Field(Base):
-    __tablename__ = 'records'
+    __tablename__ = "records"
     id = sa.Column(sa.Integer, primary_key=True)
     ppn = sa.Column(sa.String, index=True)
     field = sa.Column(sa.String, index=True)
     content = sa.Column(sa.String)
 
 
-sa.Index('ppnfield', Field.ppn, Field.field)
+sa.Index("ppnfield", Field.ppn, Field.field)
 
 
 class PicaDB:
@@ -43,6 +44,7 @@ class PicaDB:
     It also has facilities for adding verified normalizations into the
     database.
     """
+
     def __init__(self, sqlalchemy_url):
         """database queries for pica records.
 
@@ -68,8 +70,11 @@ class PicaDB:
 
     def __getitem__(self, ppn):
         if isinstance(ppn, str):
-            results = self.session.query(Field.field, Field.content)\
-                     .filter_by(ppn=ppn).all()
+            results = (
+                self.session.query(Field.field, Field.content)
+                .filter_by(ppn=ppn)
+                .all()
+            )
             if not results:
                 raise KeyError(ppn)
             raw_dict = {}
@@ -78,21 +83,26 @@ class PicaDB:
             return core.PicaRecord(ppn, SEP, raw_dict=raw_dict)
         else:
             ppn, field = ppn
-            results = self.session.query(Field.content)\
-                .filter(Field.ppn == ppn, Field.field == field).all()
+            results = (
+                self.session.query(Field.content)
+                .filter(Field.ppn == ppn, Field.field == field)
+                .all()
+            )
             if not results:
                 raise KeyError(repr((ppn, field)))
             return [core.PicaField(field, f.content, SEP) for f in results]
 
     def get_field(self, field, like=False):
-        query = self.session.query(Field.ppn, Field.id, Field.content).filter(Field.field == field)
-        return ((ppn, core.PicaField(f, c, SEP))
-                for ppn, f, c in query)
+        query = self.session.query(Field.ppn, Field.id, Field.content).filter(
+            Field.field == field
+        )
+        return ((ppn, core.PicaField(f, c, SEP)) for ppn, f, c in query)
 
     def add_record(self, ppn, tuplist):
         self.session.add_all(
             Field(ppn=ppn, field=field, content=content)
-            for field, content in tuplist)
+            for field, content in tuplist
+        )
 
     def bff_iter(self, file, commit_every=10000):
         self.create()
@@ -103,7 +113,8 @@ class PicaDB:
             for i, (ppn, rec) in itertools.islice(records, 0, commit_every):
                 for field, content in rec:
                     transaction.append(
-                            dict(ppn=ppn, field=field, content=content))
+                        dict(ppn=ppn, field=field, content=content)
+                    )
             self.session.bulk_insert_mappings(Field, transaction)
             self.session.commit()
             if i == old_i:
