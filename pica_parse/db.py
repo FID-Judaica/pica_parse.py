@@ -68,7 +68,7 @@ class PicaDB:
         else:
             self.session.commit()
 
-    def __getitem__(self, ppn):
+    def __getitem__(self, ppn: str) -> core.PicaRecord:
         if isinstance(ppn, str):
             results = (
                 self.session.query(Field.field, Field.content)
@@ -91,6 +91,12 @@ class PicaDB:
             if not results:
                 raise KeyError(repr((ppn, field)))
             return [core.PicaField(field, f.content, SEP) for f in results]
+
+    def get(self, ppn: str, default=None):
+        try:
+            return self[ppn]
+        except KeyError:
+            return default
 
     def get_field(self, field, like=False):
         query = self.session.query(Field.ppn, Field.id, Field.content).filter(

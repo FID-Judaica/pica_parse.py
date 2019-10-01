@@ -128,7 +128,7 @@ class PicaRecord:
             return default
         if len(value) == 1:
             if sub_key:
-                return value[0].get_one(sub_key, default)
+                return value[0].getone(sub_key, default)
             return value[0]
         else:
             raise MultipleFields(
@@ -188,6 +188,11 @@ class PicaField:
 
     def __getitem__(self, key):
         return self.dict[key]
+
+    def __iter__(self):
+        for k, values in self.dict.items():
+            for val in values:
+                yield k, val
 
     def items(self):
         for key, fields in self.dict.items():
