@@ -52,8 +52,12 @@ file2records() wraps file2dicts() to yield a PicaRecord object for
 
 both file2lines() a
 """
+import io
 import functools
-import libaaron
+import libaaron  # type: ignore
+from typing import (
+    List, Sequence, Dict, Iterator, Any, Tuple, TypeVar, Callable
+)
 
 
 # # helpers # #
@@ -69,106 +73,8 @@ class MultipleFields(Exception):
 
 
 # # types # #
-class PicaRecord:
-    """the internal representation is a dictionary where each field is a list
-    of PicaField types. Everything in Pica+ can apparently come in multiple.
-    However, this abstraction gives possibilities to return flat(ter)
-    abstractions as well and the risk of leaving out some fields.
-    """
-
-    __slots__ = "ppn", "dict", "sub_sep"
-
-    def __init__(self, ppn, sub_sep, lines=None, raw_dict=None):
-        self.ppn = ppn
-        self.dict = raw_dict or {}
-        self.sub_sep = sub_sep
-        if lines is not None:
-            self.extend_raw(lines)
-
-    def __repr__(self):
-        return "PicaRecord(%r, %r, %r)" % (self.ppn, self.sub_sep, self.dict)
-
-    def __setitem__(self, key, value):
-        """adds a field to the list of fields with the same id"""
-        self.dict.setdefault(key, []).append(value)
-
-    def append_raw(self, line):
-        """append an unparsed line to the fields"""
-        id_, _, value = line.partition(" ")
-        self[id_] = value
-
-    def extend_raw(self, lines):
-        for line in lines:
-            id_, _, value = line.partition(" ")
-            self[id_] = value
-
-    def __getitem__(self, key):
-        return [PicaField(key, f, self.sub_sep) for f in self.dict[key]]
-
-    def __iter__(self):
-        for key, fields in self.dict.items():
-            for value in fields:
-                yield PicaField(key, value, self.sub_sep)
-
-    def __contains__(self, key):
-        return key in self.dict
-
-    def getone(self, key, sub_key=None, default=None):
-        """get always returns one or zero fields (None if zero). If a record
-        has multiples of the requested field, throw a MultipleFields error. The
-        optional sub_key argument will be passed to the .get() method of the
-        matching field to return a (single) subfield with the same rules.
-
-        This is to avoid always having to add a list index when you know there
-        is only one field with the identifer you're looking for.
-        """
-        try:
-            value = self[key]
-        except KeyError:
-            return default
-        if len(value) == 1:
-            if sub_key:
-                return value[0].getone(sub_key, default)
-            return value[0]
-        else:
-            raise MultipleFields(
-                "key %r contains multiple values. use "
-                "subscript notation." % key,
-                value,
-            )
-
-    def get(self, key, sub_key=None, default=None):
-        try:
-            fields = self[key]
-        except KeyError:
-            return default
-
-        if not sub_key:
-            return fields
-
-        subfields = []
-        for field in fields:
-            subs = field.get(sub_key, default)
-            if subs:
-                subfields.extend(subs)
-
-        return subfields
-
-    def to_dict(self):
-        dct = {}
-        for field in self:
-            dct.setdefault(field.id, []).append(field.dict)
-        return dct
-
-    def __getstate__(self):
-        return self.ppn, self.sub_sep, self.dict
-
-    def __setstate__(self, state):
-        self.ppn, self.sub_sep, self.dict = state
-
-
 class PicaField:
-    def __init__(self, id_, raw_field, sep):
+    def __init__(self, id_: str, raw_field: str, sep: str):
         self.sep = sep
         self.raw = raw_field
         self.id = id_
@@ -181,28 +87,26 @@ class PicaField:
 
     @libaaron.reify
     def dict(self):
-        fields = {}
+        fields: Dict[str, List[str]] = {}
         for i in self.raw.lstrip(self.sep).split(self.sep):
             fields.setdefault(i[0], []).append(i[1:])
         return fields
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> List[str]:
         return self.dict[key]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Tuple[str, str]]:
         for k, values in self.dict.items():
             for val in values:
                 yield k, val
 
-    def items(self):
-        for key, fields in self.dict.items():
-            for item in fields:
-                yield (key, item)
+    def items(self) -> Iterator[Tuple[str, str]]:
+        return iter(self)
 
-    def __contains__(self, key):
+    def __contains__(self, key: str):
         return key in self.dict
 
-    def getone(self, key, default=None):
+    def getone(self, key: str, default: Any = None):
         """get always returns one or zero subfields (None if zero). If a field
         has multiples of the requested subfield, throw a MultipleFields error.
 
@@ -231,8 +135,119 @@ class PicaField:
         return value
 
 
+class PicaRecord:
+    """the internal representation is a dictionary where each field is a list
+    of PicaField types. Everything in Pica+ can apparently come in multiple.
+    However, this abstraction gives possibilities to return flat(ter)
+    abstractions as well and the risk of leaving out some fields.
+    """
+
+    __slots__ = "ppn", "dict", "sub_sep"
+
+    def __init__(
+            self,
+            ppn: str,
+            sub_sep: str,
+            lines: Sequence[str] = None,
+            raw_dict: Dict[str, List[str]] = None
+    ):
+        self.ppn = ppn
+        self.dict = raw_dict or {}
+        self.sub_sep = sub_sep
+        if lines is not None:
+            self.extend_raw(lines)
+
+    def __repr__(self):
+        return libaaron.simple_repr(self, (self.ppn, self.sub_sep, self.dict))
+
+    def __setitem__(self, key: str, value: str):
+        """adds a field to the list of fields with the same id"""
+        self.dict.setdefault(key, []).append(value)
+
+    def append_raw(self, line: str):
+        """append an unparsed line to the fields"""
+        id_, _, value = line.partition(" ")
+        self[id_] = value
+
+    def extend_raw(self, lines: Sequence[str]):
+        for line in lines:
+            id_, _, value = line.partition(" ")
+            self[id_] = value
+
+    def __getitem__(self, key: str) -> List[PicaField]:
+        return [PicaField(key, f, self.sub_sep) for f in self.dict[key]]
+
+    def __iter__(self) -> Iterator[PicaField]:
+        for key, fields in self.dict.items():
+            for value in fields:
+                yield PicaField(key, value, self.sub_sep)
+
+    def __contains__(self, key: str):
+        return key in self.dict
+
+    def getone(
+            self, key: str, sub_key: str = None, default: Any = None
+    ):
+        """get always returns one or zero fields (None if zero). If a record
+        has multiples of the requested field, throw a MultipleFields error. The
+        optional sub_key argument will be passed to the .get() method of the
+        matching field to return a (single) subfield with the same rules.
+
+        This is to avoid always having to add a list index when you know there
+        is only one field with the identifer you're looking for.
+        """
+        try:
+            value = self[key]
+        except KeyError:
+            return default
+        if len(value) == 1:
+            if sub_key:
+                return value[0].getone(sub_key, default)
+            return value[0]
+        else:
+            raise MultipleFields(
+                "key %r contains multiple values. use "
+                "subscript notation." % key,
+                value,
+            )
+
+    def get(
+            self, key: str, sub_key: str = None, default: Any = None
+    ):
+        try:
+            fields = self[key]
+        except KeyError:
+            return default
+
+        if not sub_key:
+            return fields
+
+        subfields: List[str] = []
+        for field in fields:
+            subs = field.get(sub_key, default)
+            if subs:
+                subfields.extend(subs)
+
+        return subfields
+
+    def to_dict(self):
+        dct: Dict[str, List[Dict[str, List[str]]]] = {}
+        for field in self:
+            dct.setdefault(field.id, []).append(field.dict)
+        return dct
+
+    def __getstate__(self):
+        return self.ppn, self.sub_sep, self.dict
+
+    def __setstate__(self, state):
+        self.ppn, self.sub_sep, self.dict = state
+
+
 # # iterators # #
-def file_processor(container_factory):
+A = TypeVar('A')
+
+
+def file_processor(container_factory: Callable[[], A]):
     """Decorator factory. The parameter should be a function to create a
     container you will collect things in will iterating over the lines of a
     pica record, like `list`, `dict`, `set` or what have you.
@@ -248,10 +263,10 @@ def file_processor(container_factory):
     ...    line_buffer.append(line)
 
     """
+    def decorator(func: Callable[[A, str], None]):
 
-    def decorator(func):
         @functools.wraps(func)
-        def wrapped(file):
+        def wrapped(file: io.TextIOBase) -> Iterator[Tuple[str, A]]:
             line = next(file)
             while not line.startswith("SET:"):
                 line = next(file)
@@ -269,12 +284,11 @@ def file_processor(container_factory):
             yield (ppn, container)
 
         return wrapped
-
     return decorator
 
 
 @file_processor(list)
-def file2lines(line_buffer, line):
+def file2lines(line_buffer: List[str], line: str):
     """yield one pica record at a time as a tuple of (ppn, lines), where lines
     are the rstripped lines of uparsed text of the body of the record.
     """
@@ -282,7 +296,7 @@ def file2lines(line_buffer, line):
 
 
 @file_processor(dict)
-def file2dicts(record, line):
+def file2dicts(record: Dict[str, List[str]], line: str):
     """yield one pica record at a time as a tuple of (ppn, raw_dict), where
     raw_dict is a dictionary of fields, where each value is a list, in the
     event of multiple fields. No subfields are parsed.
@@ -292,11 +306,12 @@ def file2dicts(record, line):
 
 
 @file_processor(list)
-def file2tuplist(lines, line):
-    lines.append(line.split(" ", maxsplit=1))
+def file2tuplist(lines: List[Tuple[str, str]], line: str):
+    fieldname, data = line.split(" ", maxsplit=1)
+    lines.append((fieldname, data))
 
 
-def file2records(file, sub_sep="ƒ"):
+def file2records(file: io.TextIOBase, sub_sep="ƒ") -> Iterator[PicaRecord]:
     """yield one pica record at a time as PicaRecords"""
     return (
         PicaRecord(ppn, sub_sep, raw_dict=d) for ppn, d in file2dicts(file)
