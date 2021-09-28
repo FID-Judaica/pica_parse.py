@@ -54,10 +54,29 @@ both file2lines() a
 """
 import io
 import functools
-import libaaron  # type: ignore
 from typing import (
     List, Sequence, Dict, Iterator, Any, Tuple, TypeVar, Callable
 )
+
+
+class reify:
+    # pylint: disable=too-few-public-methods
+    """Use as a class method decorator.  It operates almost exactly like the
+    Python ``@property`` decorator, but it puts the result of the method it
+    decorates into the instance dict after the first call, effectively
+    replacing the function it decorates with an instance variable.  It is, in
+    Python parlance, a non-data descriptor.
+    """
+    def __init__(self, wrapped):
+        self.wrapped = wrapped
+        functools.update_wrapper(self, wrapped)
+
+    def __get__(self, inst, objtype=None):
+        if inst is None:
+            return self
+        val = self.wrapped(inst)
+        setattr(inst, self.wrapped.__name__, val)
+        return val
 
 
 # # helpers # #
@@ -85,7 +104,7 @@ class PicaField:
     def __repr__(self):
         return "PicaField(%r, %r)" % (self.id, self.raw)
 
-    @libaaron.reify
+    @reify
     def dict(self):
         fields: Dict[str, List[str]] = {}
         for i in self.raw.lstrip(self.sep).split(self.sep):
@@ -158,7 +177,8 @@ class PicaRecord:
             self.extend_raw(lines)
 
     def __repr__(self):
-        return libaaron.simple_repr(self, (self.ppn, self.sub_sep, self.dict))
+        cls = self.__class__.__qualname__
+        return "%s%s" % (cls, (self.ppn, self.sub_sep, self.dict))
 
     def __setitem__(self, key: str, value: str):
         """adds a field to the list of fields with the same id"""

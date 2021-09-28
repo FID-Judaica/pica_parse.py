@@ -11,6 +11,5 @@ setup(
     "on plain-text Pica+ record dumps.",
     long_description=open("README.rst").read(),
     packages=["pica_parse"],
-    requires=["libaaron"],
     entry_points={"console_scripts": ["tsvpica=pica_parse.tsvpica:tsvpica"]},
 )
